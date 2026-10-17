@@ -111,11 +111,13 @@ function resetGame() {
     enemy.resetHP();
     isGameOver = false;
     logsContainer.replaceChildren();
+    kickCounter.reset();
+    strongCounter.reset();
     message.textContent = "Оберіть атаку, щоб розпочати бій.";
     updateButtons();
 }
 
-// Замикання: окрема змінна clicks для кожної кнопки.
+// Замикання: окрема змінна clicks для кожної кнопки атаки.
 // Стрілкові функції захоплюють стан і зберігають його між натисканнями.
 function createClickCounter(button, counterElement, name, action, limit = 7) {
     let clicks = 0;
@@ -134,7 +136,11 @@ function createClickCounter(button, counterElement, name, action, limit = 7) {
     };
     renderCounter();
     button.addEventListener("click", onClick);
-    return { hasClicks };
+    const reset = () => {
+        clicks = 0;
+        renderCounter();
+    };
+    return { hasClicks, reset };
 }
 
 const kickCounter = createClickCounter(
@@ -145,19 +151,15 @@ const strongCounter = createClickCounter(
     btnStrong, document.getElementById("counter-strong"),
     "Thunderbolt", () => attack("strong")
 );
-const resetCounter = createClickCounter(
-    btnReset, document.getElementById("counter-reset"),
-    "Нова гра", () => resetGame()
-);
+btnReset.addEventListener("click", resetGame);
 
 function updateButtons() {
     btnKick.disabled = isGameOver || !kickCounter.hasClicks();
     btnStrong.disabled = isGameOver || !strongCounter.hasClicks();
-    btnReset.disabled = !resetCounter.hasClicks();
     if (!isGameOver && !kickCounter.hasClicks() && !strongCounter.hasClicks()) {
-        message.textContent = "Ліміт атак вичерпано. Оновіть сторінку, щоб почати знову.";
+        message.textContent = "Ліміт атак вичерпано. Натисніть «Нова гра», щоб почати знову.";
     }
 }
 
-// Нова гра скидає лише HP і журнал; лічильники кліків зберігаються.
+// Нова гра скидає HP, журнал бою та обидва лічильники атак.
 resetGame();
