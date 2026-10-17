@@ -551,3 +551,15 @@ h1 {
 #logs p:first-child {
     background: #fff5cc;
 }
+
+/* ПР 3_4: лічильники замикань під кожною кнопкою */
+.control .click-counter {
+    display: block;
+    padding: 0 4px;
+    margin-top: -7px;
+    color: #333;
+    font-size: 12px;
+    line-height: 1.25;
+    background: rgba(255, 255, 255, .86);
+    border-radius: 3px;
+}
