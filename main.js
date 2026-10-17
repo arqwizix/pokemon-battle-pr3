@@ -1,6 +1,25 @@
 "use strict";
 
-// Створюємо персонажів за допомогою об'єктів.
+// Один набір методів використовується двома різними об'єктами через this.
+function renderHP() {
+    const { damageHP, defaultHP, eHP, eProgressbar } = this;
+    const percent = (damageHP / defaultHP) * 100;
+    eHP.textContent = `${damageHP} / ${defaultHP}`;
+    eProgressbar.style.width = `${percent}%`;
+    eProgressbar.classList.toggle("low", percent <= 60 && percent > 25);
+    eProgressbar.classList.toggle("critical", percent <= 25);
+}
+
+function changeHP(damage) {
+    this.damageHP = Math.max(0, this.damageHP - damage);
+    this.renderHP();
+}
+
+function resetHP() {
+    this.damageHP = this.defaultHP;
+    this.renderHP();
+}
+
 const character = {
     name: "Pikachu",
     defaultHP: 100,
@@ -27,67 +46,65 @@ const btnKick = document.getElementById("btn-kick");
 const btnStrong = document.getElementById("btn-strong");
 const btnReset = document.getElementById("btn-reset");
 const message = document.getElementById("battle-message");
+const logsContainer = document.querySelector("#logs");
 let isGameOver = false;
-
-// Спільна функція для двох об'єктів. this — поточний персонаж.
-function renderHP() {
-    const percent = (this.damageHP / this.defaultHP) * 100;
-    this.eHP.textContent = `${this.damageHP} / ${this.defaultHP}`;
-    this.eProgressbar.style.width = `${percent}%`;
-    this.eProgressbar.classList.toggle("low", percent <= 60 && percent > 25);
-    this.eProgressbar.classList.toggle("critical", percent <= 25);
-}
 
 function randomDamage(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Ці методи викликаються як character.changeHP() та enemy.changeHP().
-function changeHP(damage) {
-    this.damageHP = Math.max(0, this.damageHP - damage);
-    this.renderHP();
+// Випадковий рядок беремо з архіву logs.js, вставляємо імена учасників.
+function generateLog(firstPerson, secondPerson) {
+    const { name: firstName } = firstPerson;
+    const { name: secondName } = secondPerson;
+    const line = logs[Math.floor(Math.random() * logs.length)];
+    return line.replaceAll("[ПЕРСОНАЖ №1]", firstName)
+               .replaceAll("[ПЕРСОНАЖ №2]", secondName);
 }
 
-function resetHP() {
-    this.damageHP = this.defaultHP;
-    this.renderHP();
+// Створення p і додавання на початок #logs (нові події завжди зверху).
+function addBattleLog(defender, attacker, actualDamage) {
+    const { damageHP, defaultHP } = defender;
+    const text = `${generateLog(defender, attacker)} -${actualDamage}, [${damageHP}/${defaultHP}]`;
+    const paragraph = document.createElement("p");
+    paragraph.textContent = text;
+    logsContainer.insertBefore(paragraph, logsContainer.firstChild);
+}
+
+function hit(defender, attacker, damage) {
+    const previousHP = defender.damageHP;
+    defender.changeHP(damage);
+    addBattleLog(defender, attacker, previousHP - defender.damageHP);
 }
 
 function finishGame(winner) {
+    const { name } = winner;
     isGameOver = true;
     btnKick.disabled = true;
     btnStrong.disabled = true;
-    message.textContent = `Переміг ${winner.name}! Натисніть «Нова гра».`;
+    message.textContent = `Переміг ${name}! Натисніть «Нова гра».`;
 }
 
-// Дві атаки використовують одну функцію, але мають різну силу.
 function attack(type) {
     if (isGameOver) return;
 
-    let damageToEnemy;
-    let damageToCharacter;
+    const strong = type === "strong";
+    const damageToEnemy = strong ? randomDamage(16, 27) : randomDamage(7, 15);
+    const damageToCharacter = strong ? randomDamage(8, 17) : randomDamage(4, 12);
 
-    if (type === "strong") {
-        damageToEnemy = randomDamage(16, 27);
-        damageToCharacter = randomDamage(8, 17);
-    } else {
-        damageToEnemy = randomDamage(7, 15);
-        damageToCharacter = randomDamage(4, 12);
-    }
-
-    enemy.changeHP(damageToEnemy);
+    hit(enemy, character, damageToEnemy);
     if (enemy.damageHP === 0) {
         finishGame(character);
         return;
     }
 
-    character.changeHP(damageToCharacter);
+    hit(character, enemy, damageToCharacter);
     if (character.damageHP === 0) {
         finishGame(enemy);
         return;
     }
 
-    message.textContent = `Pikachu завдав ${damageToEnemy} шкоди. Charmander відповів: ${damageToCharacter}.`;
+    message.textContent = `${character.name} завдав ${damageToEnemy} шкоди. ${enemy.name} відповів: ${damageToCharacter}.`;
 }
 
 function resetGame() {
@@ -96,6 +113,7 @@ function resetGame() {
     isGameOver = false;
     btnKick.disabled = false;
     btnStrong.disabled = false;
+    logsContainer.replaceChildren();
     message.textContent = "Оберіть атаку, щоб розпочати бій.";
 }
 
