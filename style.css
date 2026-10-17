@@ -521,3 +521,33 @@ h1 {
     .control { order: 3; width: 100%; margin-top: 0; }
     .logo { max-width: 180px; }
 }
+
+/* Журнал бою — елементи створюються через JavaScript (DOM) */
+.battle-history {
+    width: min(850px, calc(100% - 32px));
+    margin: 12px auto 35px;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, .87);
+    border: 1px solid rgba(60, 60, 60, .25);
+    border-radius: 6px;
+    text-align: left;
+}
+.battle-history h3 {
+    font-size: 20px;
+    margin: 3px 0 12px;
+}
+#logs {
+    max-height: 215px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.45;
+}
+#logs p {
+    margin: 0 0 7px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, .7);
+    border-bottom: 1px solid #ddd;
+}
+#logs p:first-child {
+    background: #fff5cc;
+}
