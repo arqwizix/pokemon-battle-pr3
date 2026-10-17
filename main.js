@@ -6,7 +6,10 @@ const character = {
     defaultHP: 100,
     damageHP: 100,
     eHP: document.getElementById("health-character"),
-    eProgressbar: document.getElementById("progressbar-character")
+    eProgressbar: document.getElementById("progressbar-character"),
+    renderHP,
+    changeHP,
+    resetHP
 };
 
 const enemy = {
@@ -14,7 +17,10 @@ const enemy = {
     defaultHP: 100,
     damageHP: 100,
     eHP: document.getElementById("health-enemy"),
-    eProgressbar: document.getElementById("progressbar-enemy")
+    eProgressbar: document.getElementById("progressbar-enemy"),
+    renderHP,
+    changeHP,
+    resetHP
 };
 
 const btnKick = document.getElementById("btn-kick");
@@ -23,22 +29,28 @@ const btnReset = document.getElementById("btn-reset");
 const message = document.getElementById("battle-message");
 let isGameOver = false;
 
-// Одна спільна функція для обох персонажів.
-function renderHP(person) {
-    const percent = (person.damageHP / person.defaultHP) * 100;
-    person.eHP.textContent = `${person.damageHP} / ${person.defaultHP}`;
-    person.eProgressbar.style.width = `${percent}%`;
-    person.eProgressbar.classList.toggle("low", percent <= 60 && percent > 25);
-    person.eProgressbar.classList.toggle("critical", percent <= 25);
+// Спільна функція для двох об'єктів. this — поточний персонаж.
+function renderHP() {
+    const percent = (this.damageHP / this.defaultHP) * 100;
+    this.eHP.textContent = `${this.damageHP} / ${this.defaultHP}`;
+    this.eProgressbar.style.width = `${percent}%`;
+    this.eProgressbar.classList.toggle("low", percent <= 60 && percent > 25);
+    this.eProgressbar.classList.toggle("critical", percent <= 25);
 }
 
 function randomDamage(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function changeHP(damage, person) {
-    person.damageHP = Math.max(0, person.damageHP - damage);
-    renderHP(person);
+// Ці методи викликаються як character.changeHP() та enemy.changeHP().
+function changeHP(damage) {
+    this.damageHP = Math.max(0, this.damageHP - damage);
+    this.renderHP();
+}
+
+function resetHP() {
+    this.damageHP = this.defaultHP;
+    this.renderHP();
 }
 
 function finishGame(winner) {
@@ -63,13 +75,13 @@ function attack(type) {
         damageToCharacter = randomDamage(4, 12);
     }
 
-    changeHP(damageToEnemy, enemy);
+    enemy.changeHP(damageToEnemy);
     if (enemy.damageHP === 0) {
         finishGame(character);
         return;
     }
 
-    changeHP(damageToCharacter, character);
+    character.changeHP(damageToCharacter);
     if (character.damageHP === 0) {
         finishGame(enemy);
         return;
@@ -79,14 +91,12 @@ function attack(type) {
 }
 
 function resetGame() {
-    character.damageHP = character.defaultHP;
-    enemy.damageHP = enemy.defaultHP;
+    character.resetHP();
+    enemy.resetHP();
     isGameOver = false;
     btnKick.disabled = false;
     btnStrong.disabled = false;
     message.textContent = "Оберіть атаку, щоб розпочати бій.";
-    renderHP(character);
-    renderHP(enemy);
 }
 
 btnKick.addEventListener("click", () => attack("normal"));
