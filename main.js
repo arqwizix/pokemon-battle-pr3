@@ -80,9 +80,8 @@ function hit(defender, attacker, damage) {
 function finishGame(winner) {
     const { name } = winner;
     isGameOver = true;
-    btnKick.disabled = true;
-    btnStrong.disabled = true;
     message.textContent = `Переміг ${name}! Натисніть «Нова гра».`;
+    updateButtons();
 }
 
 function attack(type) {
@@ -111,13 +110,54 @@ function resetGame() {
     character.resetHP();
     enemy.resetHP();
     isGameOver = false;
-    btnKick.disabled = false;
-    btnStrong.disabled = false;
     logsContainer.replaceChildren();
     message.textContent = "Оберіть атаку, щоб розпочати бій.";
+    updateButtons();
 }
 
-btnKick.addEventListener("click", () => attack("normal"));
-btnStrong.addEventListener("click", () => attack("strong"));
-btnReset.addEventListener("click", resetGame);
+// Замикання: окрема змінна clicks для кожної кнопки.
+// Стрілкові функції захоплюють стан і зберігають його між натисканнями.
+function createClickCounter(button, counterElement, name, action, limit = 7) {
+    let clicks = 0;
+    const remaining = () => limit - clicks;
+    const hasClicks = () => remaining() > 0;
+    const renderCounter = () => {
+        counterElement.textContent = `Залишилося натискань: ${remaining()}`;
+    };
+    const onClick = () => {
+        if (!hasClicks()) return;
+        clicks += 1;
+        renderCounter();
+        console.log(`${name}: натискань ${clicks}, залишилося ${remaining()}`);
+        action();
+        updateButtons();
+    };
+    renderCounter();
+    button.addEventListener("click", onClick);
+    return { hasClicks };
+}
+
+const kickCounter = createClickCounter(
+    btnKick, document.getElementById("counter-kick"),
+    "Thunder Jolt", () => attack("normal")
+);
+const strongCounter = createClickCounter(
+    btnStrong, document.getElementById("counter-strong"),
+    "Thunderbolt", () => attack("strong")
+);
+const resetCounter = createClickCounter(
+    btnReset, document.getElementById("counter-reset"),
+    "Нова гра", () => resetGame()
+);
+
+function updateButtons() {
+    btnKick.disabled = isGameOver || !kickCounter.hasClicks();
+    btnStrong.disabled = isGameOver || !strongCounter.hasClicks();
+    btnReset.disabled = !resetCounter.hasClicks();
+    if (!isGameOver && !kickCounter.hasClicks() && !strongCounter.hasClicks()) {
+        message.textContent = "Ліміт атак вичерпано. Оновіть сторінку, щоб почати знову.";
+    }
+}
+
+// Нова гра скидає лише HP і журнал; лічильники кліків зберігаються.
 resetGame();
